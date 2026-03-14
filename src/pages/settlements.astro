@@ -1,0 +1,28 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import SettlementsTable from "../components/SettlementsTable";
+import { getAllSettlements } from "../lib/kalshi";
+
+let settlements = [];
+let error = null;
+
+try {
+  settlements = await getAllSettlements();
+} catch (e) {
+  error = e instanceof Error ? e.message : "Failed to load settlements";
+}
+---
+
+<DashboardLayout title="Settlements" active="Settlements">
+  <div class="mb-6">
+    <h2 class="text-xl md:text-2xl font-bold tracking-tight">Settlements</h2>
+    <p class="text-surface-700 text-sm mt-1">Resolved markets and payouts</p>
+  </div>
+  {error ? (
+    <div class="rounded-xl bg-loss/10 border border-loss/30 p-4 text-loss text-sm">
+      {error}
+    </div>
+  ) : (
+    <SettlementsTable settlements={settlements} client:load />
+  )}
+</DashboardLayout>

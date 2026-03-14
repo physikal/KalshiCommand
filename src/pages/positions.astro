@@ -1,0 +1,28 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import PositionsTable from "../components/PositionsTable";
+import { getPositions } from "../lib/kalshi";
+
+let positions = { event_positions: [] };
+let error = null;
+
+try {
+  positions = await getPositions();
+} catch (e) {
+  error = e instanceof Error ? e.message : "Failed to load positions";
+}
+---
+
+<DashboardLayout title="Positions" active="Positions">
+  <div class="mb-6">
+    <h2 class="text-xl md:text-2xl font-bold tracking-tight">Open Positions</h2>
+    <p class="text-surface-700 text-sm mt-1">Current market exposure and P&L</p>
+  </div>
+  {error ? (
+    <div class="rounded-xl bg-loss/10 border border-loss/30 p-4 text-loss text-sm">
+      {error}
+    </div>
+  ) : (
+    <PositionsTable positions={positions.event_positions} client:load />
+  )}
+</DashboardLayout>

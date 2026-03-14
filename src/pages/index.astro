@@ -1,0 +1,12 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import Dashboard from "../components/Dashboard";
+---
+
+<DashboardLayout title="Dashboard" active="Dashboard">
+  <div class="mb-6">
+    <h2 class="text-xl md:text-2xl font-bold tracking-tight">Dashboard</h2>
+    <p class="text-surface-700 text-sm mt-1">Portfolio overview and recent activity</p>
+  </div>
+  <Dashboard client:load />
+</DashboardLayout>
