@@ -1,12 +1,24 @@
 import type { APIRoute } from "astro";
 import {
   getBalance,
-  getAllFills,
   getPositions,
-  getAllSettlements,
 } from "../../lib/kalshi";
+import {
+  getAllFillsFromDb,
+  getAllSettlementsFromDb,
+  getLatestBalance,
+} from "../../lib/db";
+import { startAutoSync } from "../../lib/sync";
+
+// Start auto-sync on first API hit
+let syncStarted = false;
 
 export const GET: APIRoute = async ({ url }) => {
+  if (!syncStarted) {
+    startAutoSync();
+    syncStarted = true;
+  }
+
   const section = url.searchParams.get("section");
 
   try {
@@ -16,26 +28,30 @@ export const GET: APIRoute = async ({ url }) => {
         return Response.json(data);
       }
       case "fills": {
-        const data = await getAllFills();
-        return Response.json({ fills: data });
+        const fills = getAllFillsFromDb();
+        return Response.json({ fills });
       }
       case "positions": {
         const data = await getPositions();
         return Response.json(data);
       }
       case "settlements": {
-        const data = await getAllSettlements();
-        return Response.json({ settlements: data });
+        const settlements = getAllSettlementsFromDb();
+        return Response.json({ settlements });
       }
       case "overview": {
-        const [balance, fills, positions, settlements] =
-          await Promise.all([
-            getBalance(),
-            getAllFills(),
-            getPositions(),
-            getAllSettlements(),
-          ]);
-        return Response.json({ balance, fills, positions, settlements });
+        const [balance, positions] = await Promise.all([
+          getBalance(),
+          getPositions(),
+        ]);
+        const fills = getAllFillsFromDb();
+        const settlements = getAllSettlementsFromDb();
+        return Response.json({
+          balance,
+          fills,
+          positions,
+          settlements,
+        });
       }
       default:
         return Response.json(

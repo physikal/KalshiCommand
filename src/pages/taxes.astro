@@ -1,11 +1,14 @@
 ---
 import DashboardLayout from "../layouts/DashboardLayout.astro";
 import TaxSummary from "../components/TaxSummary";
+import { getPositions } from "../lib/kalshi";
 import {
-  getAllFills,
-  getPositions,
-  getAllSettlements,
-} from "../lib/kalshi";
+  getAllFillsFromDb,
+  getAllSettlementsFromDb,
+} from "../lib/db";
+import { startAutoSync } from "../lib/sync";
+
+startAutoSync();
 
 let fills: any[] = [];
 let positions: any[] = [];
@@ -13,14 +16,10 @@ let settlements: any[] = [];
 let error = null;
 
 try {
-  const [fillsData, posData, settData] = await Promise.all([
-    getAllFills(),
-    getPositions(),
-    getAllSettlements(),
-  ]);
-  fills = fillsData;
+  const posData = await getPositions();
+  fills = getAllFillsFromDb();
   positions = posData.market_positions ?? [];
-  settlements = settData;
+  settlements = getAllSettlementsFromDb();
 } catch (e) {
   error = e instanceof Error ? e.message : "Failed to load tax data";
 }

@@ -1,13 +1,16 @@
 ---
 import DashboardLayout from "../layouts/DashboardLayout.astro";
 import SettlementsTable from "../components/SettlementsTable";
-import { getAllSettlements } from "../lib/kalshi";
+import { getAllSettlementsFromDb } from "../lib/db";
+import { startAutoSync } from "../lib/sync";
 
-let settlements = [];
+startAutoSync();
+
+let settlements: any[] = [];
 let error = null;
 
 try {
-  settlements = await getAllSettlements();
+  settlements = getAllSettlementsFromDb();
 } catch (e) {
   error = e instanceof Error ? e.message : "Failed to load settlements";
 }

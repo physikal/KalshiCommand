@@ -1,28 +1,30 @@
 ---
 import DashboardLayout from "../layouts/DashboardLayout.astro";
 import Analytics from "../components/Analytics";
+import { getPositions } from "../lib/kalshi";
 import {
-  getAllFills,
-  getPositions,
-  getAllSettlements,
-} from "../lib/kalshi";
+  getAllFillsFromDb,
+  getAllSettlementsFromDb,
+  getBalanceHistory,
+} from "../lib/db";
+import { startAutoSync } from "../lib/sync";
+
+startAutoSync();
 
 let fills: any[] = [];
 let marketPositions: any[] = [];
 let eventPositions: any[] = [];
 let settlements: any[] = [];
+let balanceHistory: any[] = [];
 let error = null;
 
 try {
-  const [fillsData, posData, settData] = await Promise.all([
-    getAllFills(),
-    getPositions(),
-    getAllSettlements(),
-  ]);
-  fills = fillsData;
+  const posData = await getPositions();
+  fills = getAllFillsFromDb();
   marketPositions = posData.market_positions ?? [];
   eventPositions = posData.event_positions ?? [];
-  settlements = settData;
+  settlements = getAllSettlementsFromDb();
+  balanceHistory = getBalanceHistory(30);
 } catch (e) {
   error = e instanceof Error
     ? e.message
@@ -49,6 +51,7 @@ try {
       marketPositions={marketPositions}
       eventPositions={eventPositions}
       settlements={settlements}
+      balanceHistory={balanceHistory}
       client:load
     />
   )}

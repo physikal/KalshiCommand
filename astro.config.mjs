@@ -37,5 +37,13 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      rollupOptions: {
+        external: ["better-sqlite3"],
+      },
+    },
+    optimizeDeps: {
+      exclude: ["better-sqlite3"],
+    },
   },
 });
