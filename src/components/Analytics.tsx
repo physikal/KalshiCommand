@@ -36,11 +36,18 @@ interface Settlement {
   no_total_cost: number;
 }
 
+interface BalanceSnapshot {
+  balance: number;
+  portfolio_value: number;
+  recorded_at: string;
+}
+
 interface AnalyticsProps {
   fills: Fill[];
   marketPositions: MarketPosition[];
   eventPositions: EventPosition[];
   settlements: Settlement[];
+  balanceHistory?: BalanceSnapshot[];
 }
 
 function fmtDollars(val: number): string {
@@ -87,6 +94,7 @@ export default function Analytics({
   marketPositions,
   eventPositions,
   settlements,
+  balanceHistory = [],
 }: AnalyticsProps) {
   const totalRealizedPnl = marketPositions.reduce(
     (sum, p) => sum + parseFloat(p.realized_pnl_dollars),
@@ -257,6 +265,72 @@ export default function Analytics({
           </div>
         )}
       </div>
+
+      {/* Portfolio Value Over Time */}
+      {balanceHistory.length > 1 && (
+        <div className="rounded-xl bg-surface-900 border border-surface-800 p-4 md:p-5">
+          <h3 className="text-sm font-medium text-surface-200 mb-4">
+            Portfolio Value Over Time
+          </h3>
+          <div className="flex items-end gap-1 h-40">
+            {(() => {
+              const values = balanceHistory.map(
+                (s) => (s.balance + s.portfolio_value) / 100,
+              );
+              const min = Math.min(...values);
+              const max = Math.max(...values);
+              const range = max - min || 1;
+              return balanceHistory.map((snap, i) => {
+                const val = values[i];
+                const heightPct =
+                  ((val - min) / range) * 80 + 20;
+                const label = new Date(
+                  snap.recorded_at,
+                ).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                });
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 flex flex-col items-center justify-end h-full group relative"
+                  >
+                    <div className="absolute -top-6 hidden group-hover:block bg-surface-800 text-xs text-surface-200 px-2 py-1 rounded whitespace-nowrap z-10">
+                      {label}: {fmtDollars(val)}
+                    </div>
+                    <div
+                      className="w-full rounded-t bg-gain/50 hover:bg-gain/70 transition-colors min-h-[2px]"
+                      style={{
+                        height: `${heightPct}%`,
+                      }}
+                    />
+                  </div>
+                );
+              });
+            })()}
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-surface-700">
+            <span>
+              {new Date(
+                balanceHistory[0].recorded_at,
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <span>
+              {new Date(
+                balanceHistory[balanceHistory.length - 1].recorded_at,
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Buy vs Sell */}

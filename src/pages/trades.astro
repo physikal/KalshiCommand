@@ -1,13 +1,16 @@
 ---
 import DashboardLayout from "../layouts/DashboardLayout.astro";
 import TradesTable from "../components/TradesTable";
-import { getAllFills } from "../lib/kalshi";
+import { getAllFillsFromDb } from "../lib/db";
+import { startAutoSync } from "../lib/sync";
 
-let fills = [];
+startAutoSync();
+
+let fills: any[] = [];
 let error = null;
 
 try {
-  fills = await getAllFills();
+  fills = getAllFillsFromDb();
 } catch (e) {
   error = e instanceof Error ? e.message : "Failed to load trades";
 }
