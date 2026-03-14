@@ -1,0 +1,50 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import TaxSummary from "../components/TaxSummary";
+import {
+  getAllFills,
+  getPositions,
+  getAllSettlements,
+} from "../lib/kalshi";
+
+let fills: any[] = [];
+let positions: any[] = [];
+let settlements: any[] = [];
+let error = null;
+
+try {
+  const [fillsData, posData, settData] = await Promise.all([
+    getAllFills(),
+    getPositions(),
+    getAllSettlements(),
+  ]);
+  fills = fillsData;
+  positions = posData.market_positions ?? [];
+  settlements = settData;
+} catch (e) {
+  error = e instanceof Error ? e.message : "Failed to load tax data";
+}
+---
+
+<DashboardLayout title="Taxes" active="Taxes">
+  <div class="mb-6">
+    <h2 class="text-xl md:text-2xl font-bold tracking-tight">
+      Tax Summary
+    </h2>
+    <p class="text-surface-700 text-sm mt-1">
+      Gains, losses, fees, and exportable reports for tax filing
+    </p>
+  </div>
+  {error ? (
+    <div class="rounded-xl bg-loss/10 border border-loss/30 p-4 text-loss text-sm">
+      {error}
+    </div>
+  ) : (
+    <TaxSummary
+      fills={fills}
+      positions={positions}
+      settlements={settlements}
+      client:load
+    />
+  )}
+</DashboardLayout>

@@ -1,0 +1,55 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import Analytics from "../components/Analytics";
+import {
+  getAllFills,
+  getPositions,
+  getAllSettlements,
+} from "../lib/kalshi";
+
+let fills: any[] = [];
+let marketPositions: any[] = [];
+let eventPositions: any[] = [];
+let settlements: any[] = [];
+let error = null;
+
+try {
+  const [fillsData, posData, settData] = await Promise.all([
+    getAllFills(),
+    getPositions(),
+    getAllSettlements(),
+  ]);
+  fills = fillsData;
+  marketPositions = posData.market_positions ?? [];
+  eventPositions = posData.event_positions ?? [];
+  settlements = settData;
+} catch (e) {
+  error = e instanceof Error
+    ? e.message
+    : "Failed to load analytics data";
+}
+---
+
+<DashboardLayout title="Analytics" active="Analytics">
+  <div class="mb-6">
+    <h2 class="text-xl md:text-2xl font-bold tracking-tight">
+      Analytics
+    </h2>
+    <p class="text-surface-700 text-sm mt-1">
+      Trading performance, activity, and portfolio breakdown
+    </p>
+  </div>
+  {error ? (
+    <div class="rounded-xl bg-loss/10 border border-loss/30 p-4 text-loss text-sm">
+      {error}
+    </div>
+  ) : (
+    <Analytics
+      fills={fills}
+      marketPositions={marketPositions}
+      eventPositions={eventPositions}
+      settlements={settlements}
+      client:load
+    />
+  )}
+</DashboardLayout>
