@@ -40,11 +40,20 @@ interface OverviewData {
   };
 }
 
-function formatDollars(cents: number): string {
+function formatCents(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formatDollars(dollars: number): string {
+  const abs = Math.abs(dollars);
+  const formatted = abs.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return dollars < 0 ? `-$${formatted}` : `$${formatted}`;
 }
 
 export default function Dashboard() {
@@ -91,18 +100,18 @@ export default function Dashboard() {
     [];
 
   const totalExposure = allPositions.reduce(
-    (s, p) => s + (p.market_exposure ?? 0),
+    (s, p) => s + parseFloat(p.market_exposure_dollars ?? "0"),
     0,
   );
   const totalRealizedPnl = allPositions.reduce(
-    (s, p) => s + (p.realized_pnl ?? 0),
+    (s, p) => s + parseFloat(p.realized_pnl_dollars ?? "0"),
     0,
   );
-  const settlementRevenue = (data.settlements ?? []).reduce(
+  const settlementRevenueCents = (data.settlements ?? []).reduce(
     (s, x) => s + (x.revenue ?? 0),
     0,
   );
-  const totalPnl = totalRealizedPnl + settlementRevenue;
+  const totalPnl = totalRealizedPnl + settlementRevenueCents / 100;
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const fills = data.fills ?? [];
@@ -116,8 +125,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <StatCard
           label="Balance"
-          value={formatDollars(data.balance.balance)}
-          subvalue={`Portfolio: ${formatDollars(data.balance.portfolio_value)}`}
+          value={formatCents(data.balance.balance)}
+          subvalue={`Portfolio: ${formatCents(data.balance.portfolio_value)}`}
         />
         <StatCard
           label="Total P&L"
@@ -192,10 +201,10 @@ export default function Dashboard() {
               <span className="text-surface-200 text-sm">Revenue</span>
               <span
                 className={`tabular-nums font-medium ${
-                  settlementRevenue >= 0 ? "text-gain" : "text-loss"
+                  settlementRevenueCents >= 0 ? "text-gain" : "text-loss"
                 }`}
               >
-                {formatDollars(settlementRevenue)}
+                {formatCents(settlementRevenueCents)}
               </span>
             </div>
             <div className="flex justify-between">
