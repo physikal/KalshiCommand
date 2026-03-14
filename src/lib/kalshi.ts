@@ -22,8 +22,8 @@ function getHeaders(
   method: string,
   path: string,
 ): Record<string, string> {
-  const apiKeyId = import.meta.env.KALSHI_API_KEY_ID;
-  const privateKey = (import.meta.env.KALSHI_PRIVATE_KEY ?? "")
+  const apiKeyId = process.env.KALSHI_API_KEY_ID;
+  const privateKey = (process.env.KALSHI_PRIVATE_KEY ?? "")
     .replace(/\\n/g, "\n");
 
   if (!apiKeyId || !privateKey) {
