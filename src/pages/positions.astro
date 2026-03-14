@@ -3,7 +3,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 import PositionsTable from "../components/PositionsTable";
 import { getPositions } from "../lib/kalshi";
 
-let positions = { event_positions: [] };
+let positions = { market_positions: [], event_positions: [] };
 let error = null;
 
 try {
@@ -23,6 +23,6 @@ try {
       {error}
     </div>
   ) : (
-    <PositionsTable positions={positions.event_positions} client:load />
+    <PositionsTable positions={positions.market_positions ?? []} client:load />
   )}
 </DashboardLayout>
