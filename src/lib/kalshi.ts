@@ -30,8 +30,9 @@ function getHeaders(
     throw new Error("KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY must be set");
   }
 
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signature = buildSignature(privateKey, timestamp, method, path);
+  const timestamp = Date.now().toString();
+  const fullPath = "/trade-api/v2" + path.split("?")[0];
+  const signature = buildSignature(privateKey, timestamp, method, fullPath);
 
   return {
     "Content-Type": "application/json",
