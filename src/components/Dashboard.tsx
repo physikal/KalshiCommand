@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
 import StatCard from "./StatCard";
-import type { Balance, Fill, Settlement } from "../lib/kalshi";
 
 interface OverviewData {
-  balance: Balance;
-  fills: Fill[];
-  settlements: Settlement[];
+  balance: {
+    balance: number;
+    portfolio_value: number;
+  };
+  fills: Array<{
+    action: string;
+    count_fp: string;
+    created_time: string;
+    side: string;
+    ticker: string;
+    trade_id: string;
+    yes_price_dollars: string;
+    no_price_dollars: string;
+  }>;
+  settlements: Array<{
+    market_result: string;
+    market_ticker: string;
+    revenue: number;
+    settled_time: string;
+  }>;
   positions: {
     event_positions: Array<{
       event_ticker: string;
@@ -15,11 +31,20 @@ interface OverviewData {
         realized_pnl: number;
       }>;
     }>;
+    market_positions: Array<{
+      position: number;
+      market_exposure: number;
+      realized_pnl: number;
+      market_ticker: string;
+    }>;
   };
 }
 
 function formatDollars(cents: number): string {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${(cents / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 export default function Dashboard() {
@@ -58,29 +83,33 @@ export default function Dashboard() {
 
   if (!data) return null;
 
-  const allPositions = data.positions.event_positions.flatMap(
-    (ep) => ep.market_positions,
-  );
+  const allPositions =
+    data.positions.market_positions ??
+    data.positions.event_positions?.flatMap(
+      (ep) => ep.market_positions,
+    ) ??
+    [];
+
   const totalExposure = allPositions.reduce(
-    (s, p) => s + p.market_exposure,
+    (s, p) => s + (p.market_exposure ?? 0),
     0,
   );
   const totalRealizedPnl = allPositions.reduce(
-    (s, p) => s + p.realized_pnl,
+    (s, p) => s + (p.realized_pnl ?? 0),
     0,
   );
-  const settlementRevenue = data.settlements.reduce(
-    (s, x) => s + x.revenue,
+  const settlementRevenue = (data.settlements ?? []).reduce(
+    (s, x) => s + (x.revenue ?? 0),
     0,
   );
   const totalPnl = totalRealizedPnl + settlementRevenue;
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayFills = data.fills.filter(
-    (f) => f.created_time.slice(0, 10) === todayStr,
+  const fills = data.fills ?? [];
+  const todayFills = fills.filter(
+    (f) => f.created_time?.slice(0, 10) === todayStr,
   );
-
-  const recentFills = data.fills.slice(0, 5);
+  const recentFills = fills.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -88,12 +117,14 @@ export default function Dashboard() {
         <StatCard
           label="Balance"
           value={formatDollars(data.balance.balance)}
-          subvalue={`Payout: ${formatDollars(data.balance.payout)}`}
+          subvalue={`Portfolio: ${formatDollars(data.balance.portfolio_value)}`}
         />
         <StatCard
           label="Total P&L"
           value={formatDollars(totalPnl)}
-          trend={totalPnl > 0 ? "up" : totalPnl < 0 ? "down" : "neutral"}
+          trend={
+            totalPnl > 0 ? "up" : totalPnl < 0 ? "down" : "neutral"
+          }
         />
         <StatCard
           label="Exposure"
@@ -103,7 +134,7 @@ export default function Dashboard() {
         <StatCard
           label="Today's Trades"
           value={todayFills.length.toString()}
-          subvalue={`${data.fills.length} all-time`}
+          subvalue={`${fills.length} all-time`}
         />
       </div>
 
@@ -136,7 +167,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="text-right text-xs text-surface-200">
-                    {fill.count} @ ${(fill.yes_price / 100).toFixed(2)}
+                    {fill.count_fp} @ ${fill.yes_price_dollars}
                   </div>
                 </div>
               ))}
@@ -154,13 +185,11 @@ export default function Dashboard() {
                 Total Settlements
               </span>
               <span className="tabular-nums">
-                {data.settlements.length}
+                {(data.settlements ?? []).length}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-surface-200 text-sm">
-                Revenue
-              </span>
+              <span className="text-surface-200 text-sm">Revenue</span>
               <span
                 className={`tabular-nums font-medium ${
                   settlementRevenue >= 0 ? "text-gain" : "text-loss"
@@ -172,9 +201,10 @@ export default function Dashboard() {
             <div className="flex justify-between">
               <span className="text-surface-200 text-sm">Win Rate</span>
               <span className="tabular-nums">
-                {data.settlements.length > 0
+                {(data.settlements ?? []).length > 0
                   ? `${Math.round(
-                      (data.settlements.filter((s) => s.revenue > 0).length /
+                      (data.settlements.filter((s) => s.revenue > 0)
+                        .length /
                         data.settlements.length) *
                         100,
                     )}%`

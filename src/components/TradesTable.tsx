@@ -1,12 +1,18 @@
-import type { Fill } from "../lib/kalshi";
 import { useState } from "react";
+
+interface Fill {
+  action: string;
+  count_fp: string;
+  created_time: string;
+  side: string;
+  ticker: string;
+  trade_id: string;
+  yes_price_dollars: string;
+  no_price_dollars: string;
+}
 
 interface TradesTableProps {
   fills: Fill[];
-}
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 function formatDate(iso: string): string {
@@ -55,8 +61,8 @@ export default function TradesTable({ fills }: TradesTableProps) {
               <th className="px-4 py-3 text-left">Side</th>
               <th className="px-4 py-3 text-left">Action</th>
               <th className="px-4 py-3 text-right">Qty</th>
-              <th className="px-4 py-3 text-right">Yes Price</th>
-              <th className="px-4 py-3 text-right">No Price</th>
+              <th className="px-4 py-3 text-right">Yes</th>
+              <th className="px-4 py-3 text-right">No</th>
             </tr>
           </thead>
           <tbody>
@@ -86,13 +92,13 @@ export default function TradesTable({ fills }: TradesTableProps) {
                   {fill.action}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
-                  {fill.count}
+                  {fill.count_fp}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
-                  {formatCents(fill.yes_price)}
+                  ${fill.yes_price_dollars}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
-                  {formatCents(fill.no_price)}
+                  ${fill.no_price_dollars}
                 </td>
               </tr>
             ))}
@@ -102,7 +108,9 @@ export default function TradesTable({ fills }: TradesTableProps) {
                   colSpan={7}
                   className="px-4 py-8 text-center text-surface-700"
                 >
-                  {search ? "No trades match your search" : "No trades found"}
+                  {search
+                    ? "No trades match your search"
+                    : "No trades found"}
                 </td>
               </tr>
             )}
